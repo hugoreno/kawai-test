@@ -1,41 +1,37 @@
 # User Profile — Music
 
-## Identity
-- Name: Hugo Renaudin
-- Preferred address: Hugo
-- Location: New York City
+## Basics
+- Name: Hugo
+- Location: NYC
+- Spotify user: hugorenaudin-fr
 
-## Music Profile
-- Primary genres: House, Electronic, Rock, Blues
-- Discovery style: Open to exploration within and adjacent to core genres
-- Listening context: Work, commute, gym, going out, unwinding
-
-## Genre Details
-### House & Electronic
-- Core interest — likely spans deep house, tech house, minimal, techno
-- Appreciates production quality, groove, and danceability
-- Interested in both classic and contemporary sounds
-
-### Rock
-- Broad appreciation — details to be learned through conversation
-- Likely crossover interest with blues-rock, garage rock, psych rock
-
-### Blues
-- Foundational appreciation — the root of everything
-- Connects to rock and electronic through rhythm and feel
-
-## Live Music
-- Based in NYC — one of the best cities for live music
-- Interested in shows, club nights, and events
-- Venue preferences: [to be learned]
-- Event platforms used: Bandsintown, Dice, Resident Advisor
-
-## Preferences
-- [Favorite artists — to be learned through conversation]
-- [Playlist preferences — to be learned: length, mood-based, activity-based]
-- [New vs. familiar balance — to be learned]
+## Genre Affinities (confirmed from Spotify)
+- Classic rock (Fleetwood Mac, Beatles, Grateful Dead, Oasis, Pink Floyd)
+- Psychedelic / neo-psych (Tame Impala, Pink Floyd, Psychedelic Furs)
+- House / deep house (Louie Vega, Kerri Chandler, Laurence Guy)
+- Electronic / disco (Daft Punk, Gorillaz)
+- Soul / Brazilian (Tim Maia, Marvin Gaye, Azymuth)
+- Blues / blues-rock (Eric Clapton, J.J. Cale, Blind Faith)
+- Singer-songwriter (Bob Dylan, Paul Simon, James Taylor)
+- Prog / soft rock (Supertramp, Steely Dan, ELO)
 
 ## Listening Habits
-- [Peak listening times — to be learned]
-- [Preferred platforms — Spotify likely, to be confirmed]
-- [How often they want new recommendations — to be learned]
+- Current heavy rotation (March 2026): Supertramp, Gorillaz, Boston, Tame Impala, Dorothy Ashby, Steely Dan
+- All-time #1 band: Tame Impala (5 tracks in top 30 all-time)
+- House music taste: soulful/deep, not banging techno
+- Prefers groovy, feel-based music over technical showmanship
+
+## Event Preferences
+- Lives in NYC
+- Platforms: Bandsintown, Dice, Resident Advisor
+- Venue preferences: [to be learned from show attendance]
+- Budget range: [to be learned]
+- Goes out frequency: [to be learned]
+
+## Playlist Preferences
+- Default duration: [to be learned — start with 45-60 min]
+- Prefers mixes of familiar + discovery
+- Values sequencing and flow over random shuffle
+
+## Blacklist
+<!-- Artists/genres Hugo explicitly doesn't want recommended -->

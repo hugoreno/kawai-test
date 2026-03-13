@@ -1,17 +1,22 @@
 ---
 name: playlist-builder
-description: Build curated playlists based on mood, activity, occasion, or taste exploration. Track playlists and suggest refreshes over time.
-version: 1.0.0
+description: Build curated playlists on Spotify based on mood, activity, occasion, or taste exploration. Creates real Spotify playlists and tracks them in memory.
+version: 2.0.0
 metadata:
   openclaw:
     requires:
-      env: []
-      bins: []
+      env:
+        - SPOTIFY_CLIENT_ID
+        - SPOTIFY_CLIENT_SECRET
+        - SPOTIFY_REFRESH_TOKEN
+      bins:
+        - curl
+        - jq
 ---
 
 # Playlist Builder Skill
 
-Create thoughtful, well-sequenced playlists.
+Create thoughtful, well-sequenced playlists — and push them directly to Hugo's Spotify.
 
 ## When to Use
 - Hugo asks for a playlist ("make me a playlist for...")
@@ -19,6 +24,11 @@ Create thoughtful, well-sequenced playlists.
 - Hugo says "what should I listen to right now?"
 - Hugo wants to refresh or update an existing playlist
 - Triggered by heartbeat for weekly discovery drops
+
+## Spotify Script
+```bash
+SPOTIFY="~/.openclaw/skills/spotify-integration/scripts/spotify.sh"
+```
 
 ## Playlist Philosophy
 
@@ -39,53 +49,88 @@ Clarify if not obvious:
 - **Duration**: how long? (default: 45-60 min, ~12-18 tracks)
 - **Genre constraints**: stick to one genre or cross-pollinate?
 
-### 2. Source Tracks
-Pull from multiple inputs:
-- Hugo's taste profile (`memory/TASTE_PROFILE.md`) — favorite artists, liked tracks, genre affinities
-- Previous discoveries that landed well (`memory/discoveries/`)
-- Genre knowledge and cross-genre connections
-- Balance familiar (artists Hugo knows) with discovery (new finds)
+### 2. Source Tracks Using Spotify
+
+**From Hugo's taste (known good):**
+```bash
+$SPOTIFY top-tracks 50 medium_term          # his current favorites
+$SPOTIFY saved-tracks 50                    # recently liked
+$SPOTIFY recently-played 50                 # recent listens
+```
+
+**From Spotify recommendations (discovery):**
+```bash
+# Seed with Hugo's known artists + target mood parameters
+$SPOTIFY recommendations "seed_artists=5INjqkS1o8h1imAzPqGZBb,4tZwfgrHOc3mvqYlEYSvVi&target_energy=0.7&target_danceability=0.6"
+
+# For genre-specific:
+$SPOTIFY recommendations "seed_genres=house,electronic&target_energy=0.8&min_tempo=120&max_tempo=130"
+```
+
+**From artist exploration:**
+```bash
+$SPOTIFY related-artists <artist_id>       # discover adjacent artists
+$SPOTIFY artist-top-tracks <artist_id>     # get their best tracks
+```
+
+**Quality check tracks with audio features:**
+```bash
+$SPOTIFY audio-features <track_id>         # verify energy, BPM, danceability match
+```
 
 ### 3. Sequence with Intent
-- Consider key compatibility and BPM flow between tracks
-- Group by energy — don't whiplash between a blues ballad and a 130 BPM techno track
+- Check BPM and energy via audio-features to ensure smooth flow
+- Group by energy — don't whiplash between a blues ballad and 130 BPM techno
 - Use transitions: ending one track should feel natural flowing into the next
 - Mix eras if appropriate — a classic track next to a modern one with similar DNA
+- Balance: ~60% known favorites, ~30% taste-adjacent discovery, ~10% wildcards
 
-### 4. Present the Playlist
+### 4. Create on Spotify
 
-Format for output:
+```bash
+# Create the playlist
+$SPOTIFY create-playlist "Late Night Grooves" "Deep house and electronic for after midnight — curated by 🎧"
+# Returns: { id: "abc123", name: "...", external_urls: "https://open.spotify.com/playlist/abc123" }
+
+# Add tracks (collect all track URIs first)
+$SPOTIFY add-to-playlist "abc123" "spotify:track:id1,spotify:track:id2,spotify:track:id3"
+```
+
+### 5. Present the Playlist
+
+Format for output (include the Spotify link!):
 ```markdown
 # [Playlist Name]
 > [One-line description / mood]
+> 🔗 [Spotify Link]
 
-| # | Artist | Track | Genre | BPM~ | Notes |
-|---|--------|-------|-------|------|-------|
-| 1 | [artist] | [track] | [genre] | [bpm] | [opener — sets the tone] |
-| 2 | [artist] | [track] | [genre] | [bpm] | [builds from opener] |
+| # | Artist | Track | BPM~ | Notes |
+|---|--------|-------|------|-------|
+| 1 | [artist] | [track] | [bpm] | [opener — sets the tone] |
+| 2 | [artist] | [track] | [bpm] | [builds from opener] |
 ...
 
 **Duration**: ~[XX] min
 **Vibe arc**: [e.g., "Slow burn → peak energy → mellow close"]
 ```
 
-### 5. Save to Memory
+### 6. Save to Memory
 Write to `memory/playlists/[playlist-name-slug].md`:
 ```markdown
 # [Playlist Name]
 - Created: YYYY-MM-DD
+- Spotify ID: [playlist_id]
+- Spotify URL: [url]
 - Mood/Purpose: [description]
 - Duration: ~[XX] min
 - Track count: [n]
 - Status: active
 
 ## Tracklist
-[same table as above]
+[same table as above, including track IDs and URIs]
 
 ## Feedback
-<!-- Updated when Hugo reacts:
-- [date]: [feedback — e.g., "loved tracks 3 and 7, track 5 didn't fit"]
--->
+<!-- Updated when Hugo reacts -->
 ```
 
 ## Playlist Types
@@ -93,39 +138,41 @@ Write to `memory/playlists/[playlist-name-slug].md`:
 ### Mood Playlists
 Built around a feeling: "something dark and groovy", "uplifting energy", "Sunday morning calm"
 - Lean heavily on taste profile mood-genre mapping
-- Keep genre cohesive or intentionally cross-genre
+- Use Spotify recommendations with mood-tuning params: target_valence, target_energy, target_danceability
 
 ### Activity Playlists
 Built for a context: "gym session", "deep work", "cooking dinner", "pre-going-out"
-- Match energy to activity demands
-- For focus: avoid vocals, keep it steady, no jarring transitions
-- For gym: high energy, driving rhythms, build intensity
-- For going out: build anticipation, club-ready energy
+- Match energy to activity via audio features
+- For focus: high instrumentalness, steady tempo, target_speechiness < 0.1
+- For gym: high energy (0.8+), driving rhythms
+- For going out: build anticipation, target_danceability > 0.7
 
 ### Discovery Playlists
 Designed to expand Hugo's taste:
-- 60% familiar territory (known genres/artists)
-- 30% adjacent exploration (related genres, collaborators, influences)
-- 10% wildcard (something from left field that might land)
+- Use `$SPOTIFY related-artists` to find adjacent artists
+- Use `$SPOTIFY recommendations` with less familiar seeds
+- 60% familiar territory, 30% adjacent exploration, 10% wildcard
 - Flag the wildcards: "this one's a stretch but hear me out"
 
 ### Occasion Playlists
 For specific events: "dinner party", "road trip", "house party"
-- Consider the audience (not just Hugo's taste but the vibe for the group)
+- Consider the audience (not just Hugo's taste)
 - Lean accessible while keeping taste integrity
 
 ## Refreshing a Playlist
 
 When updating an existing playlist:
 1. Read the current playlist from `memory/playlists/`
-2. Check feedback section for what worked and what didn't
-3. Keep the bangers (tracks Hugo loved)
-4. Swap out tracks that got stale or didn't land
-5. Add recent discoveries that fit the playlist's vibe
-6. Maintain the energy arc — don't just swap randomly
-7. Update the file with new tracks and date of refresh
+2. Use the stored Spotify ID to pull current state: `$SPOTIFY get-playlist <id>`
+3. Check feedback section for what worked and what didn't
+4. Keep the bangers (tracks Hugo loved)
+5. Swap out tracks that got stale — use `$SPOTIFY add-to-playlist` and Spotify's API for removals
+6. Add recent discoveries that fit the playlist's vibe
+7. Maintain the energy arc
+8. Update the memory file
 
 ## Output Style
+- Always include the Spotify link so Hugo can play it immediately
 - Lead with the playlist name and vibe, not a wall of text
 - If it's a long playlist (15+ tracks), highlight 3-4 standout picks
 - Offer to adjust: "Want me to make it more [X] or less [Y]?"
